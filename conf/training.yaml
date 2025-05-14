@@ -4,8 +4,6 @@ defaults:
 
 transform_resize: 224
 
-train_ratio: 0.7
-
 batch_size: 32
 
 out_features: 2
