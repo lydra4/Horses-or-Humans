@@ -6,7 +6,6 @@ import hydra
 import omegaconf
 import torch
 from inference.inference_pipeline import InferencePipeline
-from PIL import Image
 from utils.general_utils import setup_logging
 from utils.seed_utils import fix_seed
 
@@ -23,7 +22,7 @@ def main(cfg: omegaconf.DictConfig):
 
     fix_seed(seed=cfg.environ.seed)
 
-    if cfg.environ.device < 0:
+    if cfg.environ.device == -1:
         device = torch.device("cpu")
     else:
         device = torch.device(f"cuda:{cfg.environ.device}")
@@ -31,11 +30,8 @@ def main(cfg: omegaconf.DictConfig):
     inference_pipeline = InferencePipeline(cfg=cfg, logger=logger, device=device)
     inference_pipeline.batch_infer()
 
-    def gradio_inferface(image: Image.Image):
-        return inference_pipeline.classify_and_generate_cam(image=image)
-
     gr.Interface(
-        fn=gradio_inferface,
+        fn=inference_pipeline.classify_and_generate_cam,
         inputs=gr.Image(type="pil", label="Upload an image of a horse or human"),
         outputs=[
             gr.Label(num_top_classes=1, label="Prediction"),
