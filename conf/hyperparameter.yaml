@@ -8,5 +8,5 @@ optimizer_name: ["adam", "sgd", "adamw"]
 
 checkpoint_save_path: "./model"
 model: "hyperparameter_tuning_efficientnet"
-epochs: 5
+epochs: 100
 optuna_storage_path: "./mlflow/optuna_hparam_tuning.db"
