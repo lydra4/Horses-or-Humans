@@ -137,15 +137,17 @@ class InferencePipeline(TrainingPipeline):
 
     def classify_and_generate_cam(self, image: Image.Image) -> Tuple[str, np.ndarray]:
         image_tensor = self.transform(img=image).unsqueeze(0).to(self.device)
-        outputs = self.model(image_tensor)
-        prediction = torch.argmax(outputs, dim=1).item()
-        label = "horse" if prediction == 0 else "human"
 
-        cam_image = self.generate_cam(
-            image_tensor=image_tensor,
-            original_image=np.array(image),
-            target_class=prediction,
-        )
+        with torch.inference_mode():
+            outputs = self.model(image_tensor)
+            prediction = torch.argmax(outputs, dim=1).item()
+            label = "horse" if prediction == 0 else "human"
+
+            cam_image = self.generate_cam(
+                image_tensor=image_tensor,
+                original_image=np.array(image),
+                target_class=prediction,
+            )
 
         return label, cam_image
 
