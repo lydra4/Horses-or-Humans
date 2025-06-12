@@ -1,6 +1,6 @@
 seed: 42
 
-device: 0
+device: -1
 
 path_to_processed_data: "./data/processed/"
 
