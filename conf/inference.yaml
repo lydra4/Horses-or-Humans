@@ -2,4 +2,4 @@ defaults:
   - training
   - _self_
 
-checkpoint_path: "./model/efficientnet/model_epoch_10.pth"
+checkpoint_path: "./model/adam/batch_size_16/learning_rate_0.0001/hyperparameter_tuning_efficientnet/model_epoch_20.pth"
