@@ -1,6 +1,14 @@
 # 🐎 Horses Or Humans 🧍
 
-A full ML pipeline to classify images of horses and humans using state-of-the-art convolutional neural networks. This project includes everything from data preprocessing and training to model evaluation, inference, and a live web interface using Gradio and Docker.
+[![Python](https://img.shields.io/badge/python-3.11-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/pytorch-%23EE4C2C.svg?logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![Hydra](https://img.shields.io/badge/hydra-0D86FF?logo=hydra&logoColor=white)](https://hydra.cc/)
+[![MLflow](https://img.shields.io/badge/mlflow-13B9FD?logo=mlflow&logoColor=white)](https://mlflow.org/)
+[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?logo=docker&logoColor=white)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+A full ML pipeline to classify images of horses and humans using state-of-the-art convolutional neural networks.  
+This project covers data preprocessing, training, hyperparameter tuning, inference with Grad-CAM explainability, and a live web UI using Gradio and Docker.
 
 ---
 
@@ -8,84 +16,58 @@ A full ML pipeline to classify images of horses and humans using state-of-the-ar
 
 - **Frameworks:** PyTorch, Hydra, MLflow
 - **Image Processing:** PIL, OpenCV
-- **Model Architectures:** EfficientNet-B0, ConvNeXt, ResNet-18
+- **Model Architectures:** EfficientNet-B0, ConvNeXt-Tiny, ResNet-18
 - **Interface:** Gradio
-- **Environment Management:** Miniconda
-- **Containerization:** Docker Desktop
+- **Environment:** Miniconda
+- **Containerization:** Docker (CPU & GPU support)
 
 ---
 
 ## 🧠 Project Features
 
-- ✅ Complete ML pipeline from raw image data to deployment
-- 🎯 High-performance classification with multiple CNN architectures
-- 🔍 Grad-CAM visualization for model explainability
-- 📈 MLflow for logging experiments and hyperparameters
-- 🐳 Docker support for both CPU and GPU environments
-- 💡 Interactive Gradio UI for real-time image classification
+- ✅ End-to-end ML pipeline from raw images to deployment
+- 🎯 Multiple CNN backbones with competitive accuracy
+- 🔍 Grad-CAM for visual explanations of predictions
+- 📈 MLflow experiment tracking & hyperparameter logging
+- 🐳 Dockerized for easy local and cloud deployment (CPU/GPU)
+- 💡 Interactive Gradio app for real-time classification
 
 ---
 
 ## 📂 Directory Overview
 
-/
+<pre> ```plaintext /
 Horses or Humans
-├── conf
-│ ├── data_processing.yaml
-│ ├── hyperparameter.yaml
-│ ├── inference.yaml
-│ ├── logging.yaml
-│ ├── training.yaml
-│ └── environ
-│ └── default.yaml
-├── data
-│ ├── processed
-│ │ ├── train
-│ │ ├── test
-│ │ └── val
-│ ├── unprocessed
-│ │ ├── horses
-│ │ └── humans
-│ ├── diagrams
-│ │ └── Horses or Humans.drawio
-│ ├── docker
-│ │ ├── horsesorhumans-cpu.Dockerfile
-│ │ └── horsesorhumans-gpu.Dockerfile
-│ ├── images
-│ ├── logs
-│ ├── mlflow
-│ │ └── optuna_hparam_tuning.db
-│ ├── model
-│ ├── notebook
-│ │ └── hyperparameter_tuning_analysis.ipynb
-│ ├── scripts
-│ │ ├── build_cpu_docker.sh
-│ │ ├── build_gpu_docker.sh
-│ │ └── run_docker.sh
-│ ├── slides
-│ │ └── Horses or Humans.pptx
-│ └── src
-│ ├── app.py
-│ ├── hyerparameter.py
-│ ├── infer.py
-│ ├── process_data.py
-│ ├── train.py
-│ ├── data_prep
-│ │ └── pipelines.py.py
-│ ├── hyperparameter_tuning
-│ │ └── hyperparameter_tuning.py
-│ ├── inference
-│ │ └── inference_pipeline.py
-│ ├── training_pipelines
-│ │ └── training_pipelines.py
-│ └── utils
-│ ├── general_utils.py
-│ └── seed_utils.py
+├── conf/                      # Config files for training, inference, logging, env
+├── data/
+│   ├── processed/             # Processed datasets (train, val, test)
+│   ├── unprocessed/           # Raw images (horses, humans)
+│   ├── diagrams/              # Project diagrams (drawio)
+│   ├── docker/                # Dockerfiles for CPU & GPU
+│   ├── images/                # Extra images
+│   ├── logs/                  # Logs for training and inference
+│   ├── mlflow/                # MLflow DB for experiment tracking
+│   ├── model/                 # Saved models & checkpoints
+│   ├── notebook/              # Jupyter notebooks for analysis
+│   ├── scripts/               # Shell scripts for docker build/run
+│   ├── slides/                # Presentation slides
+│   └── src/                   # Source code
+│       ├── app.py             # Gradio frontend
+│       ├── train.py           # Training entrypoint
+│       ├── infer.py           # Inference entrypoint
+│       ├── process_data.py    # Data processing entrypoint
+│       ├── hyperparameter.py  # Hyperparameter tuning entrypoint
+│       ├── data_prep/         
+│       ├── hyperparameter_tuning/
+│       ├── inference/
+│       ├── training_pipelines/
+│       └── utils/
 ├── .dockerignore
 ├── dev-requirements.txt
 ├── horsesorhumans-conda-env.yaml
 ├── requirements-cpu.txt
 └── requirements-gpu.txt
+``` </pre>
 
 ---
 
@@ -94,40 +76,69 @@ Horses or Humans
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/horses-or-humans.git
+git clone https://github.com/lydra4/Deep-Learning/tree/main/Horses%20or%20Humans
 cd horses-or-humans
 ```
 
 ### 2. Set Up Environment
 
+```bash
 conda env create -f horsesorhumans-conda-env.yaml
 conda activate horsesorhumans
+```
 
-### 3. Run Training
+### 3. Prepare Dataset
 
+```bash
+python src/process_data.py
+```
+
+### 4. Train Model
+
+```bash
 python src/train.py
+```
 
-### 4. Launch Gradio App
+### 5. Launch Gradio App
 
+```bash
 python src/app.py
+```
 
 ## 🐳 Docker Support
 
 ### CPU Build
 
+```
 bash data/scripts/build_cpu_docker.sh
+```
 
 ### GPU Build
 
+```bash
 bash data/scripts/build_gpu_docker.sh
+```
 
 ### Run Docker
 
+```bash
 bash data/scripts/run_docker.sh
+```
 
 ## 📊 Model Performance
 
-Model Accuracy (Val) F1 Score Params
-EfficientNet-B0 92.8% 0.927 ~5.3M
-ConvNeXt-T 91.2% 0.914 ~29M
-ResNet-18 88.5% 0.886 ~11.7M
+📊 Model Performance (Validation Set)
+
+| Model           | Train Accuracy | Val Accuracy | Parameters |
+| --------------- | -------------- | ------------ | ---------- |
+| EfficientNet-B0 | 92.8%          | 0.927        | ~5.3M      |
+| ConvNeXt-T      | 91.2%          | 0.914        | ~29M       |
+| ResNet-18       | 88.5%          | 0.886        | ~11.5M     |
+
+## 📚 References
+
+[![PyTorch](https://img.shields.io/badge/pytorch-%23EE4C2C.svg?logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![Hydra](https://img.shields.io/badge/hydra-0D86FF?logo=hydra&logoColor=white)](https://hydra.cc/)
+[![MLflow](https://img.shields.io/badge/mlflow-13B9FD?logo=mlflow&logoColor=white)](https://mlflow.org/)
+[![Gradio](https://img.shields.io/badge/gradio-6B40E3?logo=gradio&logoColor=white)](https://gradio.app/)
+[![Optuna](https://img.shields.io/badge/optuna-4F3BFF?logo=optuna&logoColor=white)](https://optuna.org/)
