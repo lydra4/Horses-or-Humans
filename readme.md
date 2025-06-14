@@ -131,9 +131,9 @@ bash data/scripts/run_docker.sh
 
 | Model           | Train Accuracy | Val Accuracy | Parameters |
 | --------------- | -------------- | ------------ | ---------- |
-| EfficientNet-B0 | 92.8%          | 0.927        | ~5.3M      |
-| ConvNeXt-T      | 91.2%          | 0.914        | ~29M       |
-| ResNet-18       | 88.5%          | 0.886        | ~11.5M     |
+| EfficientNet-B0 | 100.0%         | 100.00%      | ~5.3M      |
+| ConvNeXt-T      | 51.15%         | 50.00%       | ~29M       |
+| ResNet-18       | 100.0%         | 96.90%       | ~11.5M     |
 
 ## 📚 References
 
