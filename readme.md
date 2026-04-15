@@ -7,7 +7,7 @@
 [![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?logo=docker&logoColor=white)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-A full ML pipeline to classify images of horses and humans using state-of-the-art convolutional neural networks.  
+A full ML pipeline to classify images of horses and humans using state-of-the-art convolutional neural networks.
 This project covers data preprocessing, training, hyperparameter tuning, inference with Grad-CAM explainability, and a live web UI using Gradio and Docker.
 
 ---
@@ -57,7 +57,7 @@ Horses or Humans
 │       ├── infer.py           # Inference entrypoint
 │       ├── process_data.py    # Data processing entrypoint
 │       ├── hyperparameter.py  # Hyperparameter tuning entrypoint
-│       ├── data_prep/         
+│       ├── data_prep/
 │       ├── hyperparameter_tuning/
 │       ├── inference/
 │       ├── training_pipelines/
