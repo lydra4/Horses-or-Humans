@@ -6,6 +6,7 @@ opencv-python==4.11.0.86
 optuna==4.3.0
 optuna-dashboard==0.18.0
 pillow==11.2.1
+pre-commit==4.5.1
 python-json-logger==3.3.0
 python-multipart==0.0.20
 pyyaml==6.0.2
