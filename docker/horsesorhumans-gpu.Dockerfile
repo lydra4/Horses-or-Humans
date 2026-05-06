@@ -6,7 +6,7 @@ ARG NON_ROOT_UID="2222"
 ARG NON_ROOT_GID="2222"
 ARG HOME_DIR="/home/${NON_ROOT_USER}"
 ARG REPO_DIR="."
-r
+
 RUN useradd -l -m -s /bin/bash -u ${NON_ROOT_UID} ${NON_ROOT_USER}
 
 RUN apt-get update && apt-get install -y \
