@@ -1,23 +1,23 @@
 import logging
-import os
 
 import hydra
-import omegaconf
 import torch
+from omegaconf import DictConfig
+
 from inference.inference_pipeline import InferencePipeline
 from utils.general_utils import setup_logging
 from utils.seed_utils import fix_seed
 
 
-@hydra.main(version_base=None, config_path="../conf", config_name="inference.yaml")
-def main(cfg: omegaconf.DictConfig):
+@hydra.main(
+    version_base=None,
+    config_path="../conf",
+    config_name="inference.yaml",
+)
+def main(cfg: DictConfig):
     logger = logging.getLogger(__name__)
     logger.info("Setting up logging configuration.\n")
-    setup_logging(
-        logging_config_path=os.path.join(
-            hydra.utils.get_original_cwd(), "conf", "logging.yaml"
-        )
-    )
+    setup_logging()
 
     if cfg.environ.seed:
         logger.info(f"Random seed set to {cfg.environ.seed}.\n")
