@@ -1,27 +1,27 @@
 import logging
-import os
 
 import hydra
-import omegaconf
 import torch
+from omegaconf import DictConfig
+
 from hyperparameter_tuning.hyperparameter_tuning import HyperparameterTuning
 from utils.general_utils import setup_logging
 from utils.seed_utils import fix_seed
 
 
-@hydra.main(version_base=None, config_path="../conf", config_name="hyperparameter.yaml")
-def main(cfg: omegaconf.DictConfig):
+@hydra.main(
+    version_base=None,
+    config_path="../conf",
+    config_name="hyperparameter.yaml",
+)
+def main(cfg: DictConfig):
     logger = logging.getLogger(__name__)
-    logger.info("Setting up logging configuration.\n")
-    setup_logging(
-        logging_config_path=os.path.join(
-            hydra.utils.get_original_cwd(), "conf", "logging.yaml"
-        )
-    )
+    logger.info("Setting up logging configuration.")
+    setup_logging()
 
     if cfg.environ.seed:
         fix_seed(seed=cfg.environ.seed)
-        logger.info(f"Seed fixed at {cfg.environ.seed}.\n")
+        logger.info(f"Seed fixed at {cfg.environ.seed}.")
 
     if cfg.environ.device == -1:
         device = torch.device("cpu")
