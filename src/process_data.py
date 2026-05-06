@@ -1,14 +1,19 @@
 import logging
-import os
 
 import hydra
+from omegaconf import DictConfig
+
 from data_prep.pipelines import ImagePipeline
 from utils.general_utils import setup_logging
 from utils.seed_utils import fix_seed
 
 
-@hydra.main(version_base=None, config_path="../conf", config_name="data_processing")
-def main(cfg):
+@hydra.main(
+    version_base=None,
+    config_path="../conf",
+    config_name="data_processing",
+)
+def main(cfg: DictConfig):
     """Main function to set up logging, fix random seed, and execute the image processing pipeline.
 
     This function performs the following tasks:
@@ -22,11 +27,7 @@ def main(cfg):
     """
     logger = logging.getLogger(__name__)
     logger.info("\nSetting up logging configuration.\n")
-    setup_logging(
-        logging_config_path=os.path.join(
-            hydra.utils.get_original_cwd(), "conf", "logging.yaml"
-        )
-    )
+    setup_logging()
     if cfg.environ.seed:
         fix_seed(seed=cfg.environ.seed)
         logger.info(f"Seed fixed at {cfg.environ.seed}\n")
