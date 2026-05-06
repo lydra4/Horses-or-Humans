@@ -96,7 +96,11 @@ class InferencePipeline(TrainingPipeline):
         else:
             raise ValueError(f"Unsupported Model: {self.model_name}.")
 
-        checkpoint = torch.load(self.cfg.checkpoint_path, map_location=self.device)
+        checkpoint = torch.load(
+            self.cfg.checkpoint_path,
+            map_location=self.device,
+            weights_only=True,
+        )
         self.model.load_state_dict(checkpoint)
         self.logger.info("Checkpoint loaded successfully.")
         self.model.to(self.device)
