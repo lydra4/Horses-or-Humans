@@ -6,22 +6,27 @@ from typing import Dict, Optional, Tuple
 import optuna
 import torch
 import torch.nn as nn
+from omegaconf import DictConfig
 from optuna.samplers import GridSampler
 from sklearn.model_selection import ParameterGrid
 from torchvision.models import EfficientNet_B0_Weights, efficientnet_b0
 from tqdm import tqdm
+
 from training_pipelines.training_pipelines import TrainingPipeline
 
 
 class HyperparameterTuning(TrainingPipeline):
     def __init__(
-        self, cfg: dict, logger: Optional[logging.Logger], device: torch.device
+        self,
+        cfg: DictConfig,
+        logger: Optional[logging.Logger],
+        device: torch.device,
     ):
-        self.full_cfg = cfg  # Backup config file
-        self.cfg = copy.copy(cfg)  # Shallow copy
+        self.full_cfg: DictConfig = cfg
+        self.cfg = copy.copy(cfg)
         super().__init__(cfg=self.cfg, logger=logger, device=device)
 
-        self.logger = logger
+        self.logger = logger or logging.getLogger(__name__)
         self.device = device
 
         self.model: Optional[nn.Module] = None
@@ -107,6 +112,10 @@ class HyperparameterTuning(TrainingPipeline):
         self._set_transforms()
         self._load_dataset_from_folder()
         self._initialize_efficientnet()
+        if self.model is None:
+            raise RuntimeError(
+                "Model failed to initialize in _initialize_efficientnet."
+            )
         self._initialize_optimizer_and_criterion(params=self.model.parameters())
         self._setup_mlflow()
         best_val_accuracy = self._train_model()
