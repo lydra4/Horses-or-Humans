@@ -5,7 +5,7 @@ import shutil
 import time
 from collections import Counter
 from multiprocessing import Pool, cpu_count
-from typing import List, Optional
+from typing import Optional
 
 import omegaconf
 from PIL import Image
@@ -50,7 +50,7 @@ class ImagePipeline:
             [self.dataset.classes[label] for _, label in self.dataset.samples]
         )
         self.processed_path: Optional[str] = self.cfg.path_to_processed_data
-        self.used_images: Optional[dict[str, List[str]]] = None
+        self.used_images: dict[str, set[str]] = {}
 
     def _get_class_distribution(self) -> None:
         """
@@ -83,6 +83,10 @@ class ImagePipeline:
         for split in ["test", "val"]:
             tasks = []
 
+            if not self.dataset.classes:
+                self.logger.warning("No classes found in dataset.")
+                continue
+
             for class_name in self.dataset.classes:
                 source_dir = os.path.join(self.cfg.path_to_unprocessed_data, class_name)
                 destination_dir = os.path.join(
@@ -95,8 +99,7 @@ class ImagePipeline:
                     population=all_images, k=self.cfg.test_val_images
                 )
 
-                self.used_images.setdefault(class_name, set())
-                self.used_images[class_name].update(selected_images)
+                self.used_images.setdefault(class_name, set()).update(selected_images)
 
                 for image_name in selected_images:
                     tasks.append((image_name, source_dir, destination_dir))
@@ -113,9 +116,7 @@ class ImagePipeline:
                     )
 
             else:
-                self.logger.info(
-                    f"\nCopying images into {split}, {class_name} on a single processor.\n"
-                )
+                self.logger.info(f"Copying images into {split} on a single processor.")
                 for task in tqdm(tasks):
                     self._copy_single_image(task)
 
