@@ -22,7 +22,7 @@ ENV PATH="${HOME_DIR}/.local/bin:${PATH}"
 USER ${NON_ROOT_USER}
 WORKDIR ${HOME_DIR}
 
-RUN pip install --no-cache-dir torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cu124
+RUN pip install --no-cache-dir torch==2.6.0 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cu124
 
 COPY --chown=${NON_ROOT_USER}:${NON_ROOT_GID} ${REPO_DIR}/prod-requirements.txt ./prod-requirements.txt
 
