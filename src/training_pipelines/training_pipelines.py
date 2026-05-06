@@ -1,11 +1,12 @@
 import logging
 import os
-from typing import Optional
+from typing import Any, Optional
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision.models as models
+from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 from torchvision.models import (
@@ -16,6 +17,7 @@ from torchvision.models import (
     resnet18,
 )
 from tqdm import tqdm
+
 from utils.general_utils import mlflow_init, mlflow_log
 
 
@@ -41,7 +43,10 @@ class TrainingPipeline:
     """
 
     def __init__(
-        self, cfg: dict, logger: Optional[logging.Logger], device: torch.device
+        self,
+        cfg: DictConfig,
+        logger: Optional[logging.Logger],
+        device: torch.device,
     ):
         """
         Initializes the TrainingPipeline.
@@ -58,12 +63,14 @@ class TrainingPipeline:
         self.val_loader: Optional[DataLoader] = None
         self.test_loader: Optional[DataLoader] = None
         self.transform: Optional[transforms.Compose] = None
-        self.model = None
-        self.criterion = None
-        self.optimizer = None
-        self.mlflow_init_status = None
-        self.mlflow_run = None
-        self.epoch = None
+
+        self.model: Optional[nn.Module] = None
+        self.criterion: Optional[nn.Module] = None
+        self.optimizer: Optional[optim.Optimizer] = None
+
+        self.mlflow_init_status: bool = False
+        self.mlflow_run: Any = None
+        self.epoch: int = 0
 
     def _set_transforms(self):
         """
@@ -166,6 +173,7 @@ class TrainingPipeline:
 
         except Exception as e:
             self.logger.error(f"{self.cfg.model} model failed to load: {e}.")
+            raise
 
         self.model.to(self.device)
         self.logger.info(f"Model loaded to {str(self.device).upper()}.\n")
@@ -176,6 +184,9 @@ class TrainingPipeline:
 
         Uses CrossEntropyLoss and the Adam optimizer with a learning rate from the config.
         """
+        if self.model is None:
+            raise RuntimeError("Model must be instantiated before setting optimizer.")
+
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.Adam(
             params=self.model.parameters(), lr=self.cfg["learning_rate"]
@@ -204,6 +215,9 @@ class TrainingPipeline:
             self.logger.error("MLflow initialization failed.")
 
     def _evaluate(self, data_loader):
+        if self.model is None or data_loader is None:
+            return 0.0
+
         self.model.eval()
         correct, total = 0, 0
 
@@ -224,6 +238,9 @@ class TrainingPipeline:
         Saves the model’s state_dict to the directory defined in `checkpoint_save_path`
         under a subfolder named after the model.
         """
+        if self.model is None:
+            return
+
         checkpoint_path = os.path.join(
             self.cfg.checkpoint_save_path,
             self.cfg.model,
@@ -239,6 +256,14 @@ class TrainingPipeline:
         For each epoch, computes training loss and accuracy, logs metrics to MLflow,
         and saves checkpoints periodically.
         """
+        if (
+            self.model is None
+            or self.optimizer is None
+            or self.criterion is None
+            or self.train_loader is None
+        ):
+            raise RuntimeError("Training components not initialized.")
+
         os.makedirs(
             name=os.path.join(self.cfg.checkpoint_save_path, self.cfg.model),
             exist_ok=True,
