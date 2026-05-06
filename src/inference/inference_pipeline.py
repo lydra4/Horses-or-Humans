@@ -1,14 +1,14 @@
 import logging
 import os
-from typing import Optional, Tuple
+from typing import Optional, cast
 
 import cv2
 import numpy as np
-import omegaconf
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
+from omegaconf import DictConfig
 from PIL import Image
 from torchvision.models import (
     ConvNeXt_Small_Weights,
@@ -18,6 +18,7 @@ from torchvision.models import (
     resnet18,
 )
 from tqdm import tqdm
+
 from training_pipelines.training_pipelines import TrainingPipeline
 
 
@@ -33,7 +34,10 @@ class InferencePipeline(TrainingPipeline):
     """
 
     def __init__(
-        self, cfg: omegaconf.DictConfig, logger: logging.Logger, device: torch.device
+        self,
+        cfg: DictConfig,
+        logger: Optional[logging.Logger],
+        device: torch.device,
     ) -> None:
         """Initializes the InferencePipeline.
 
@@ -43,6 +47,7 @@ class InferencePipeline(TrainingPipeline):
             device (torch.device): Torch device (CPU or GPU) used for running inference.
         """
         super().__init__(cfg=cfg, logger=logger, device=device)
+        self.logger = logger or logging.getLogger(__name__)
         self.model_name: Optional[str] = None
         self.model: Optional[nn.Module] = None
 
@@ -62,22 +67,26 @@ class InferencePipeline(TrainingPipeline):
         self.model_name = os.path.basename(os.path.dirname(self.cfg.checkpoint_path))
         out_features = self.cfg.out_features
 
+        model_name = self.model_name
+        if model_name is None:
+            raise ValueError("Could not determine model name.")
+
         self.logger.info(f"Initializing {self.model_name}.\n")
-        if self.model_name.lower() == "convnet":
+        if model_name.lower() == "convnet":
             self.model = models.convnext_small(weights=ConvNeXt_Small_Weights.DEFAULT)
             number_features = self.model.classifier[2].in_features
             self.model.classifier[2] = nn.Linear(
                 in_features=number_features, out_features=out_features
             )
 
-        elif self.model_name.lower() == "efficientnet":
+        elif model_name.lower() == "efficientnet":
             self.model = efficientnet_b0(weights=EfficientNet_B0_Weights)
             number_features = self.model.classifier[1].in_features
             self.model.classifier[1] = nn.Linear(
                 in_features=number_features, out_features=out_features
             )
 
-        elif self.model_name.lower() == "resnet-18":
+        elif model_name.lower() == "resnet-18":
             self.model = resnet18(weights=ResNet18_Weights.DEFAULT)
             number_features = self.model.fc.in_features
             self.model.fc = nn.Linear(
@@ -94,26 +103,38 @@ class InferencePipeline(TrainingPipeline):
         self.model.eval()
 
     def generate_cam(
-        self, image_tensor: torch.Tensor, original_image: np.ndarray, target_class: int
+        self,
+        image_tensor: torch.Tensor,
+        original_image: np.ndarray,
+        target_class: int,
     ) -> np.ndarray:
-        feature_maps = None
-        gradients = None
+        assert self.model is not None, "Model must be initialized before CAM generation"
+
+        model_features = getattr(self.model, "features")
+        feature_maps: torch.Tensor | None = None
+        gradients: torch.Tensor | None = None
 
         def forward_hook(module, input, output):
             nonlocal feature_maps
-            feature_maps = output.detach()
+            feature_maps = output.detach().clone()
 
         def backward_hook(module, grad_in, grad_out):
             nonlocal gradients
             gradients = grad_out[0].detach()
 
-        handle_fwd = self.model.features[-1].register_forward_hook(forward_hook)
-        handle_bwd = self.model.features[-1].register_backward_hook(backward_hook)
+        model_features = getattr(self.model, "features")
+        handle_fwd = model_features[-1].register_forward_hook(forward_hook)
+        handle_bwd = model_features[-1].register_full_backward_hook(backward_hook)
 
         output = self.model(image_tensor)
         self.model.zero_grad()
         class_score = output[0, target_class]
         class_score.backward()
+
+        if gradients is None or feature_maps is None:
+            handle_fwd.remove()
+            handle_bwd.remove()
+            raise RuntimeError("Capture failed: feature_maps or gradients are None.")
 
         pooled_gradients = torch.mean(gradients, dim=[0, 2, 3])
 
@@ -135,11 +156,20 @@ class InferencePipeline(TrainingPipeline):
 
         return superimposed_img
 
-    def classify_and_generate_cam(self, image: Image.Image) -> Tuple[str, np.ndarray]:
-        image_tensor = self.transform(img=image).unsqueeze(0).to(self.device)
+    def classify_and_generate_cam(self, image: Image.Image) -> tuple[str, np.ndarray]:
+        if self.transform is None:
+            raise ValueError("self.transform is not initialized.")
+
+        transformed = cast(torch.Tensor, self.transform(image))
+        image_tensor = transformed.unsqueeze(0).to(self.device)
+
+        if self.model is None:
+            raise RuntimeError(
+                "The model has not been initialized. Please load a model into self.model first."
+            )
 
         outputs = self.model(image_tensor)
-        prediction = torch.argmax(outputs, dim=1).item()
+        prediction = int(torch.argmax(outputs, dim=1).item())
         label = "horse" if prediction == 0 else "human"
 
         cam_image = self.generate_cam(
@@ -157,6 +187,11 @@ class InferencePipeline(TrainingPipeline):
             data_loader (torch.utils.data.DataLoader): DataLoader object for the test dataset.
         """
         correct, total = 0, 0
+
+        if self.model is None:
+            raise RuntimeError(
+                "Model is not initialized. Did you forget to call the loading method?"
+            )
 
         with torch.no_grad():
             for images, labels in tqdm(data_loader):
@@ -181,6 +216,11 @@ class InferencePipeline(TrainingPipeline):
         self._set_transforms()
         self._load_dataset_from_folder()
         self.initialize_model_with_weights()
+        if self.test_loader is None:
+            raise RuntimeError(
+                "test_loader is None. Ensure _load_dataset_from_folder() "
+                "is correctly initializing the DataLoader."
+            )
         self._run_infer(data_loader=self.test_loader)
 
     def batch_infer(self):
