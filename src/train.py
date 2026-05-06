@@ -1,15 +1,20 @@
 import logging
-import os
 
 import hydra
 import torch
+from omegaconf import DictConfig
+
 from training_pipelines.training_pipelines import TrainingPipeline
 from utils.general_utils import setup_logging
 from utils.seed_utils import fix_seed
 
 
-@hydra.main(version_base=None, config_path="../conf", config_name="training.yaml")
-def main(cfg):
+@hydra.main(
+    version_base=None,
+    config_path="../conf",
+    config_name="training.yaml",
+)
+def main(cfg: DictConfig):
     """
     Main function to set up the logging configuration, fix the seed for reproducibility,
     and initialize and run the training pipeline.
@@ -28,11 +33,7 @@ def main(cfg):
     """
     logger = logging.getLogger(__name__)
     logger.info("\nSetting up logging configuration.\n")
-    setup_logging(
-        logging_config_path=os.path.join(
-            hydra.utils.get_original_cwd(), "conf", "logging.yaml"
-        )
-    )
+    setup_logging()
 
     if cfg.environ.seed:
         fix_seed(seed=cfg.environ.seed)
